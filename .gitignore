@@ -1,0 +1,8 @@
+# Java Template
+
+*.class
+
+## Eclipse 
+.project
+.classpath
+.settings/
