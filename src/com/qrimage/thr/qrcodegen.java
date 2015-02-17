@@ -6,13 +6,12 @@ import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.text.DecimalFormat;
 import java.util.Hashtable;
-
 import javax.imageio.ImageIO;
-
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.EncodeHintType;
 import com.google.zxing.WriterException;
@@ -22,77 +21,66 @@ import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 
 public class qrcodegen {
 
-	private static final String FILE_PATH = "I:\\QRImage\\";
+	private static final String FILE_PATH = "directory-path";
 	private static final int IMG_SIZE = 1000;
 	private static final String FILE_TYPE = "png";
-	private static final int IMG_COUNT = 21;
+	private static final int IMG_COUNT = 5;
+	private static int dirname_start = 1;
+	private static int dirname_end = IMG_COUNT;
+	private static String start_name = null;
+	private static String end_name = null;
+	private static String filePath = null;
+	private static String[] splitstr = null;
+	private static String rename = null;
 
-	public void createImage() {
+	public void createImage(String filename) throws FileNotFoundException {
 
-		// public void createImage(){
+		FileInputStream fis = new FileInputStream(FILE_PATH + filename);
 
-		int dircount1 = 1;
-		int dircount2 = IMG_COUNT;
-
-		try {
-
-			FileInputStream fis = new FileInputStream(FILE_PATH
-					+ "qrcodelink.txt");
-			// Construct BufferedReader from InputStreamReader
-			BufferedReader br = new BufferedReader(new InputStreamReader(fis));
+		try (BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
 			int count = 0;
-			int j = 1;
-			String line = null;
-
-			dircount1 = 1;
-			dircount2 = IMG_COUNT;
-
-			String temp1 = String.format(new DecimalFormat("0000")
-					.format(dircount1));
-			String temp2 = String.format(new DecimalFormat("0000")
-					.format(dircount2));
-
-			String dir = temp1 + "-" + temp2;
-			new File(FILE_PATH + dir).mkdir();
+			String line;
+			String dir = create_directory();
 
 			while ((line = br.readLine()) != null) {
-
-				System.out.println("\n" + line);
 				count++;
-
-				String[] split = line.split("/");
-				String rename = split[5] + ".png";
+				System.out.println("\n" + line);
+				splitstr = line.split("/");
+				rename = splitstr[5] + ".png";
 				// System.out.println(split[5]+"rename:"+rename);
 
-				String filePath = FILE_PATH + dir + "\\" + rename;
+				filePath = FILE_PATH + dir + "\\" + rename;
 				System.out.println(filePath);
-
 				File qrFile = new File(filePath);
+				// creating QR image by sending url, file type and file path and the size of the image
 				createQRImage(qrFile, line, IMG_SIZE, FILE_TYPE);
-				
-				// create new directory after certain number images stored in that respective directory
-				
+
 				if (count == IMG_COUNT) {
-
-					dircount1 = dircount1 + IMG_COUNT;
-					dircount2 = dircount2 + IMG_COUNT;
-					temp1 = String.format(new DecimalFormat("0000").format(dircount1));
-					temp2 = String.format(new DecimalFormat("0000").format(dircount2));
-					dir = temp1 + "-" + temp2;
-					new File(FILE_PATH + dir).mkdir();
-					System.out.println("\ndir name: " + dir);
+					// create new directory after certain number images stored
+					// in that respective directory
+					dir = create_directory();
 					count = 0;
-
 				}
 			}
-
-			br.close();
 			System.out.println("DONE");
-		} catch (Exception e) {
+		} catch (IOException | WriterException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
+	}
+
+	private String create_directory() {
+
+		start_name = String.format(new DecimalFormat("0000").format(dirname_start));
+		end_name = String.format(new DecimalFormat("0000").format(dirname_end));
+		// creating the directory name (0001-0005)
+		String dir = start_name + "-" + end_name;
+		System.out.println("dir name:" + dir);
+		new File(FILE_PATH + dir).mkdir();
+		dirname_start = dirname_start + IMG_COUNT;
+		dirname_end = dirname_end + IMG_COUNT;
+		return dir;
 	}
 
 	private static void createQRImage(File qrFile, String qrCodeText, int size,
@@ -135,9 +123,21 @@ public class qrcodegen {
 		ImageIO.write(image, fileType, qrFile);
 	}
 
-	public static void main(String[] args) throws WriterException, IOException {
+	public static void main(String... args) throws InterruptedException , WriterException ,FileNotFoundException {
 
 		qrcodegen qri = new qrcodegen();
-		qri.createImage();
+		
+		if (args[0]==null){
+			
+			System.out.println("Proper Usage is: URL text filename (qrcodelink.txt)");
+            		System.exit(0);
+		}else{
+			//qri.createImage("qrcodelink.txt");
+			qri.createImage(args[0]);
+		}
+		
+		
+		
+		
 	}
 }
